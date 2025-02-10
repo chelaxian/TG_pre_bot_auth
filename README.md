@@ -12,7 +12,7 @@ This project adds a pre-authentication layer to your Telegram bot to ensure that
 ## How It Works
 
 1. **Allowed Numbers List:**  
-   The script reads allowed phone numbers from `phone_numbers.txt` (one number per line in the format, e.g., `+79262355196`).
+   The script reads allowed phone numbers from `phone_numbers.txt` (one number per line in the format, e.g., `+79991112233`).
 
 2. **Global Update Interception:**  
    It monkey-patches the `Application.process_update` method (from the `python-telegram-bot` library) so that every incoming update is checked for user authorization.
