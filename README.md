@@ -74,3 +74,144 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Acknowledgements
 
 This project was created to help secure Telegram bots by adding an additional pre-authentication layer, ensuring that only trusted users can access paid API services.
+
+---
+---
+
+# Admin Phone Bot
+
+**Admin Phone Bot** is a Telegram bot designed to work exclusively with the administrator. It automatically adds phone numbers (from contacts or plain text messages) to a list, allows you to manage the list, and provides several administrative commands such as restarting and updating the bot.
+
+## Features
+
+- **Automatic Phone Number Addition:**  
+  If the bot receives a message containing a phone number (either via a contact or a text that resembles a phone number), it normalizes the number and automatically adds it to the list if it is valid.
+
+- **Manage Phone Number List:**  
+  - **/add `<phone>`** – Add a phone number to the list.
+  - **/del `<phone>`** – Remove a phone number from the list.
+  - **/list** – Display an inline keyboard with all phone numbers. When you click on a number, a confirmation menu appears before deletion.
+
+- **Search for a Phone Number:**  
+  - **/find `<phone>`** – Search for a phone number in the list. The bot displays a green check mark (✅) if the number is found and a red cross (❌) if it is not.
+
+- **Deep Link Generation for Telegram Profiles:**  
+  - **/tme** – Show deep links in the format:  
+    `https://t.me/+<phone>`
+  - **/tg** – Show deep links in the format:  
+    `tg://resolve?phone=<phone_without_plus>`
+
+- **Administrative Commands:**  
+  - **/restart** – Restart the bot by executing the restart script.
+  - **/update** – Update the bot by executing the update script. The update log is streamed in real time in the same message.
+  - **/help** – Display a help message with a list of all available commands in a fixed-width code block.
+
+- **Access Restriction:**  
+  The bot only processes messages from the administrator whose Telegram user ID is specified in the configuration.
+
+## Installation and Setup
+
+### Requirements
+
+- Python 3.7 or higher.
+- [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot) (version 20.x).
+- Bash scripts for restarting and updating the bot (for example, `restart_bots.sh` and `update_bots.sh`).
+
+### Installation
+
+1. **Create a Virtual Environment (optional but recommended):**
+
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
+2. **Install Dependencies:**
+
+   ```bash
+   pip install python-telegram-bot python-dotenv
+   ```
+
+### Configuration
+
+Edit the **CONFIGURATION** section at the top of the `admin_phone_bot.py` file:
+
+- **BOT_TOKEN:** Enter your bot token (e.g., `"0000000000:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"`).
+- **ADMIN_ID:** Specify the Telegram user ID of the administrator (e.g., `123456789`).
+- **PHONE_FILE:** Set the path to the file that stores phone numbers (one number per line).  
+  Example: `/root/Telegram/USERS/phone_numbers.txt`
+- **RESTART_SCRIPT:** Set the path to the script that restarts the bot.  
+  Example: `/root/Telegram/BOTS/restart_bots.sh`
+- **UPDATE_SCRIPT:** Set the path to the script that updates the bot.  
+  Example: `/root/Telegram/BOTS/update_bots.sh`
+
+### Running the Bot
+
+Start the bot with the following command:
+
+```bash
+python3 admin_phone_bot.py
+```
+
+The bot will now listen for messages and commands on Telegram. **Note:** It only accepts commands from the administrator (whose ID is set as `ADMIN_ID`).
+
+## Available Commands
+
+```
+/add <phone>    - Add a phone number to the list
+/del <phone>    - Remove a phone number from the list
+/list           - Show a menu with phone numbers (with confirmation before deletion)
+/find <phone>   - Search for a phone number in the list (✅ if found, ❌ if not)
+/tme            - Show deep links in t.me format
+/tg             - Show deep links in tg://resolve format
+/restart        - Restart the bot using the restart script
+/update         - Update the bot using the update script (logs are streamed in real time)
+/help           - Display this help message
+```
+
+> **Note:** The **/help** command displays the list of commands inside a fixed-width code block to ensure all text and hyphens are aligned.
+
+## Usage Examples
+
+- **Adding a Number:**  
+  Send:  
+  `/add +79991112233`  
+  The bot will add the number to the list if it isn’t already present.
+
+- **Removing a Number:**  
+  Send:  
+  `/del +79991112233`  
+  Alternatively, use the **/list** command, select the number from the inline menu, and confirm deletion.
+
+- **Searching for a Number:**  
+  Send:  
+  `/find +79991112233`  
+  The bot replies with a green check (✅) if the number is found, or a red cross (❌) if it isn’t.
+
+- **Generating Deep Links:**  
+  - **/tme** – Outputs links like `https://t.me/+79991112233`.
+  - **/tg** – Outputs links like `tg://resolve?phone=79991112233`.
+
+- **Restarting the Bot:**  
+  Send:  
+  `/restart`  
+  The bot executes the restart script and displays the output.
+
+- **Updating the Bot:**  
+  Send:  
+  `/update`  
+  The bot runs the update script and streams the log output in real time.
+
+- **Displaying Help:**  
+  Send:  
+  `/help`  
+  The bot will show a help message with a formatted list of all commands.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Contributing and Support
+
+If you have suggestions, fixes, or questions, please open an issue or submit a pull request in this repository.
+
