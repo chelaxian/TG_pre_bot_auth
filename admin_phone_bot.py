@@ -26,17 +26,17 @@ All configuration values are defined in the CONFIGURATION section below.
 #############################
 
 # Bot token – you can either set it here or load it from the environment.
-BOT_TOKEN = "7600013216:AAEb-e9z-EJXLk5uJXttr7l6qa0GpiGAv5U"
+BOT_TOKEN = "0000000000:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 # Telegram user ID of the administrator (only messages from this user are processed)
-ADMIN_ID = 7360853
+ADMIN_ID = 1234567
 
 # Path to the file that stores allowed phone numbers (one per line)
-PHONE_FILE = "/root/Telegram/BACKUP/phone_numbers.txt"
+PHONE_FILE = "/root/Telegram_bot/phone_numbers.txt"
 
 # Paths to the shell scripts for restarting and updating the bot.
-RESTART_SCRIPT = "/root/Telegram/restart_bots.sh"
-UPDATE_SCRIPT = "/root/Telegram/RUN_update_all.sh"
+RESTART_SCRIPT = "/root/Telegram_bot/restart_bot.sh"
+UPDATE_SCRIPT = "/root/Telegram_bot/update_bot.sh"
 
 # (Опционально) Draft text for deep links (if needed; otherwise leave empty)
 DRAFT_TEXT = ""  # currently not appended in deep links
