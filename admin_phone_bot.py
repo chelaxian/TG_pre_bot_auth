@@ -26,17 +26,17 @@ All configuration values are defined in the CONFIGURATION section below.
 #############################
 
 # Bot token – you can either set it here or load it from the environment.
-BOT_TOKEN = "0000000000:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+BOT_TOKEN = "7600013216:AAEb-e9z-EJXLk5uJXttr7l6qa0GpiGAv5U"
 
 # Telegram user ID of the administrator (only messages from this user are processed)
-ADMIN_ID = 0000000
+ADMIN_ID = 7360853
 
 # Path to the file that stores allowed phone numbers (one per line)
-PHONE_FILE = "/root/Telegram/USERS/phone_numbers.txt"
+PHONE_FILE = "/root/Telegram/BACKUP/phone_numbers.txt"
 
 # Paths to the shell scripts for restarting and updating the bot.
-RESTART_SCRIPT = "/root/Telegram/BOTS/restart_bots.sh"
-UPDATE_SCRIPT = "/root/Telegram/BOTS/update_bots.sh"
+RESTART_SCRIPT = "/root/Telegram/restart_bots.sh"
+UPDATE_SCRIPT = "/root/Telegram/RUN_update_all.sh"
 
 # (Опционально) Draft text for deep links (if needed; otherwise leave empty)
 DRAFT_TEXT = ""  # currently not appended in deep links
@@ -122,22 +122,22 @@ async def add_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     args = context.args
     if not args:
-        await update.message.reply_text("Usage: /add <phone number>")
+        await update.message.reply_text("❔ Usage: /add <phone number>")
         return
 
     phone = " ".join(args)
     phone = normalize_number(phone)
     if not is_valid_phone(phone):
-        await update.message.reply_text("Invalid phone number format.")
+        await update.message.reply_text("⚠️ Invalid phone number format.")
         return
 
     numbers = read_phone_numbers()
     if phone in numbers:
-        await update.message.reply_text(f"{phone} is already in the list.")
+        await update.message.reply_text(f"⚠️ {phone} is already in the list.")
     else:
         numbers.add(phone)
         write_phone_numbers(numbers)
-        await update.message.reply_text(f"Added phone number: {phone}")
+        await update.message.reply_text(f"➕ Added phone number: {phone}")
 
 
 async def del_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -149,7 +149,7 @@ async def del_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     args = context.args
     if not args:
-        await update.message.reply_text("Usage: /del <phone number>")
+        await update.message.reply_text("❔ Usage: /del <phone number>")
         return
 
     phone = " ".join(args)
@@ -158,9 +158,9 @@ async def del_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if phone in numbers:
         numbers.remove(phone)
         write_phone_numbers(numbers)
-        await update.message.reply_text(f"Removed phone number: {phone}")
+        await update.message.reply_text(f"➖ Removed phone number: {phone}")
     else:
-        await update.message.reply_text(f"{phone} not found in the list.")
+        await update.message.reply_text(f"⚠️ {phone} not found in the list.")
 
 
 async def list_numbers(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -173,7 +173,7 @@ async def list_numbers(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     numbers = sorted(read_phone_numbers())
     if not numbers:
-        await update.message.reply_text("The list is empty.")
+        await update.message.reply_text("⚠️ The list is empty.")
         return
 
     keyboard = []
@@ -181,7 +181,7 @@ async def list_numbers(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Initial callback data: "confirm|<phone>"
         keyboard.append([InlineKeyboardButton(num, callback_data=f"confirm|{num}")])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Select a phone number to delete:", reply_markup=reply_markup)
+    await update.message.reply_text("❓ Select a phone number to delete:", reply_markup=reply_markup)
 
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -200,13 +200,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         phone = data.split("|", 1)[1]
         keyboard = [
             [
-                InlineKeyboardButton("Yes, delete", callback_data=f"delete|{phone}"),
-                InlineKeyboardButton("Cancel", callback_data=f"cancel|{phone}"),
+                InlineKeyboardButton("‼️ Yes, delete", callback_data=f"delete|{phone}"),
+                InlineKeyboardButton("🔙 Cancel", callback_data=f"cancel|{phone}"),
             ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(
-            text=f"Are you sure you want to delete {phone}?",
+            text=f"❓ Are you sure you want to delete {phone}?",
             reply_markup=reply_markup,
         )
     elif data.startswith("delete|"):
@@ -215,12 +215,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if phone in numbers:
             numbers.remove(phone)
             write_phone_numbers(numbers)
-            await query.edit_message_text(text=f"Removed phone number: {phone}")
+            await query.edit_message_text(text=f"➖ Removed phone number: {phone}")
         else:
-            await query.edit_message_text(text=f"{phone} not found in the list.")
+            await query.edit_message_text(text=f"⚠️ {phone} not found in the list.")
     elif data.startswith("cancel|"):
         phone = data.split("|", 1)[1]
-        await query.edit_message_text(text=f"Deletion cancelled for {phone}.")
+        await query.edit_message_text(text=f"🔚 Deletion cancelled for {phone}.")
 
 
 async def restart_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -237,10 +237,10 @@ async def restart_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text=True,
             check=True,
         )
-        output = result.stdout.strip() or "Service restarted"
+        output = result.stdout.strip() or "❕ Service restarted"
         await update.message.reply_text(output)
     except subprocess.CalledProcessError as e:
-        await update.message.reply_text(f"Error restarting bot: {e}")
+        await update.message.reply_text(f"⚠️ Error restarting bot: {e}")
 
 
 async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -248,11 +248,12 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     /update - Execute the update script and stream its output in real time.
     The output is continuously updated in the same message, but only every update_interval seconds
     to avoid flooding Telegram.
+    In the end, the log is cleared and a final message "❕ Update finished." is displayed.
     """
     if update.effective_user.id != ADMIN_ID:
         return
 
-    sent_message = await update.message.reply_text("Starting update...\n")
+    sent_message = await update.message.reply_text("❕ Starting update...\n")
     
     process = await asyncio.create_subprocess_exec(
         UPDATE_SCRIPT,
@@ -261,7 +262,7 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     
     accumulated_output = ""
-    update_interval = 1.0  # обновляем сообщение раз в 1 секунду
+    update_interval = 1.0  # update message once per second
     last_update_time = asyncio.get_event_loop().time()
     
     while True:
@@ -274,18 +275,17 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         now = asyncio.get_event_loop().time()
         if now - last_update_time >= update_interval:
             last_update_time = now
-            text_to_send = accumulated_output[-4000:]  # ограничение Telegram — 4096 символов, используем 4000 для запасa
+            text_to_send = accumulated_output[-4000:]  # only last 4000 characters
             try:
                 await sent_message.edit_text(text_to_send)
             except Exception as e:
                 logger.error("Error editing message: %s", e)
-            # можно добавить небольшую задержку, если требуется
             await asyncio.sleep(0.1)
     
     await process.wait()
-    final_text = accumulated_output[-4000:] + "\nUpdate finished."
     try:
-        await sent_message.edit_text(final_text)
+        # Clear the log and display the final message
+        await sent_message.edit_text("❕ Update finished.")
     except Exception as e:
         logger.error("Error editing final message: %s", e)
 
@@ -300,7 +300,7 @@ async def find_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     args = context.args
     if not args:
-        await update.message.reply_text("Usage: /find <phone number>")
+        await update.message.reply_text("❔ Usage: /find <phone number>")
         return
 
     phone = " ".join(args)
@@ -322,7 +322,7 @@ async def tme_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     numbers = sorted(read_phone_numbers())
     if not numbers:
-        await update.message.reply_text("The list is empty.")
+        await update.message.reply_text("⚠️ The list is empty.")
         return
 
     links = []
@@ -342,7 +342,7 @@ async def tg_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     numbers = sorted(read_phone_numbers())
     if not numbers:
-        await update.message.reply_text("The list is empty.")
+        await update.message.reply_text("⚠️ The list is empty.")
         return
 
     links = []
@@ -405,15 +405,15 @@ async def phone_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if is_valid_phone(phone_norm):
             numbers = read_phone_numbers()
             if phone_norm in numbers:
-                await message.reply_text(f"{phone_norm} is already in the list.")
+                await message.reply_text(f"⚠️ {phone_norm} is already in the list.")
             else:
                 numbers.add(phone_norm)
                 write_phone_numbers(numbers)
-                await message.reply_text(f"Added phone number: {phone_norm}")
+                await message.reply_text(f"➕ Added phone number: {phone_norm}")
         else:
-            await message.reply_text("The provided text does not seem to be a valid phone number.")
+            await message.reply_text("⚠️ The provided text does not seem to be a valid phone number.")
     else:
-        await message.reply_text("No phone number detected in your message.")
+        await message.reply_text("⚠️ No phone number detected in your message.")
 
 
 async def set_bot_commands(app: Application):
