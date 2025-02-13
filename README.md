@@ -1,103 +1,118 @@
 # TG Pre Bot Auth
 
-**TG Pre Bot Auth** is a pre-authentication layer for your Telegram bot. It intercepts every incoming update and checks if the user is authorized by verifying their phone number. Only users whose normalized phone numbers are present in the allowed numbers file or the temporary numbers file are granted access to the main bot logic.
+TG Pre Bot Auth is a pre-authentication layer for your Telegram bot. It intercepts every incoming update and forces users to share their contact via Telegram’s built-in contact sharing method. Only users whose normalized phone numbers are present in your allowed numbers file (and/or in the temporary numbers file) will have their updates passed on to the main bot logic.
 
-Temporary phone numbers can also be used. These are stored in a JSON file along with a deletion date. This allows you to grant temporary access without permanently adding the number to your allowed list.
+Temporary phone numbers can also be used – these are stored in a JSON file along with a deletion date. This allows you to grant temporary access without permanently adding the number to your allowed list.
 
 ---
 
 ## Features
 
-### Get Your Telegram ID
-- **/id** – (Available to everyone) Returns your Telegram user ID in a monospace format for easy copying.
+- **Pre-Bot Authentication:**  
+  Intercepts every update before it reaches your main bot logic.
 
-### Automatic Phone Number Addition
-- The bot automatically normalizes and adds phone numbers (from contacts or plain text messages) to the allowed list if they are valid.
-- It supports adding multiple numbers at once (each on a separate line).
+- **Secure Phone Verification:**  
+  Uses Telegram's contact sharing method to securely verify the user's phone number.
 
-### Manage Phone Number List
-- **/add `<phone>`** – Permanently add a phone number.
-- **/del `<phone>`** – Remove a phone number from both the permanent and temporary lists.
-- **/list** – Display a paginated inline keyboard with phone numbers. Temporary numbers are shown at the top with a ⏳ icon and a label indicating the approximate remaining lifetime (e.g., `(< 3h)`). Navigation buttons allow you to browse pages, and a global **Cancel** button lets you cancel the deletion process.
-- **/find `<phone>`** – Search for a phone number in the combined list. The bot displays a green check (✅) if the number is found, and a red cross (❌) if it is not. Temporary numbers will be marked with ⏳.
+- **Allowed Numbers Check:**  
+  Compares the normalized phone number against a list of allowed numbers stored in a file.
 
-### Temporary Phone Number Management
-- **/temp `<duration>` `<phone>`** – Temporarily add a phone number.
-  - `<duration>` can be specified in seconds (`s`), minutes (`m`), hours (`h`), days (`d`), weeks (`w`), months (`M`), or years (`Y`). For example: `500s`, `100m`, `10d`, `2w`, `6M`, `1Y`.
-  - The bot calculates the deletion date based on the current time and stores the temporary phone number (with its deletion date) in a separate JSON file.
+- **Temporary Phone Numbers:**  
+  Temporary numbers (with an associated deletion date) are stored in a separate JSON file and are also accepted for authorization.
 
-### Deep Link Generation for Telegram Profiles
-- **/tme [<phone>]** – Generate deep links in t.me format.
-  - Without an argument, it outputs links for all numbers (split into multiple messages if needed).
-  - With a `<phone>` argument, it returns the link for that specific number.
-  - Format: `https://t.me/+<phone>`
-- **/tg [<phone>]** – Generate deep links in tg://resolve format.
-  - Without an argument, it outputs links for all numbers.
-  - With a `<phone>` argument, it returns the link for that specific number.
-  - Format: `tg://resolve?phone=<phone_without_plus>`
-
-### Administrative Commands
-- **/restart** – Restart the bot by executing the configured restart script.
-- **/update** – Update the bot by executing the configured update script. The update log is streamed in real time and replaced with a final message upon completion.
-- **/help** – Display a help message with a formatted list of all available commands.
-
-### Access Restriction
-- The bot processes commands only from the administrator whose Telegram user ID is specified in the configuration. (All commands except **/id** are ignored for other users.)
+- **Seamless Integration:**  
+  Once a user is authorized, their updates are passed to your main bot script without any changes to its code.
 
 ---
 
-## Installation and Setup
+## How It Works
 
-### Requirements
-- Python 3.7 or higher
-- [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot) (version 20.x)
-- [python-dotenv](https://github.com/theskumar/python-dotenv) (for environment variables)
-- Bash scripts for restarting and updating the bot (e.g., `restart_bot.sh` and `update_bot.sh`)
+- **Allowed Numbers List:**  
+  The authenticator reads allowed phone numbers from a file (one number per line, e.g., `+79991112233`).
 
-You can install the dependencies via pip:
+- **Temporary Numbers:**  
+  It also reads temporary phone numbers from a JSON file. Each entry in this file should be an object with at least a `"phone"` key (and a `"deletion_date"` key, which is used to automatically expire the number).
+
+- **Global Update Interception:**  
+  It monkey-patches the `Application.process_update` method (from the python-telegram-bot library) so that every incoming update is checked for user authorization.
+
+- **Contact Verification:**  
+  If an update contains a contact, the phone number is normalized (removing spaces and dashes, ensuring it starts with a "+").  
+  If the normalized number is found either in the allowed list or in the temporary numbers list, the user is authorized and their update is passed to the main bot logic.  
+  If the number is not found (or if no contact is provided), the bot responds with a prompt to share a contact.
+
+---
+
+## Requirements
+
+- Python 3.x
+- [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
+- [python-dotenv](https://github.com/theskumar/python-dotenv)
+
+Install dependencies via pip:
 
 ```bash
 pip install python-telegram-bot python-dotenv
 ```
 
+---
+
+## Setup and Usage
+
 ### Configuration
 
-In the root directory of your project, edit or create a `.env` file and/or modify the configuration section at the top of `authenticator.py`:
+Edit the **CONFIGURATION** section at the top of `authenticator.py` or create a `.env` file in your project root with the following parameters:
 
-- **BOT_TOKEN**:  
-  The bot token is preferably taken from the environment variable `BOT_TOKEN`.  
-  If not set, you can explicitly specify it in the code (e.g., `"YOUR_BOT_TOKEN_HERE"`).  
-  **Note:** The authenticator will not launch the bot if the token remains as the placeholder.
+- **BOT_TOKEN:**  
+  The Telegram bot token. The token is preferably taken from the environment variable `BOT_TOKEN`. If not set, you can explicitly specify it here.  
+  _Example (in .env file):_  
+  `BOT_TOKEN=your_bot_token_here`
 
-- **ALLOWED_NUMBERS_FILE**:  
-  The path to the file that stores allowed (permanent) phone numbers (one per line).  
-  _Example:_ `/root/Telegram_bot/phone_numbers.txt`
+- **ALLOWED_NUMBERS_FILE:**  
+  The path to the file that stores allowed (permanent) phone numbers. One phone number per line.  
+  _Example:_  
+  `/root/Telegram_bot/phone_numbers.txt`
 
-- **TEMP_PHONE_FILE**:  
+- **TEMP_PHONE_FILE:**  
   The path to the JSON file that stores temporary phone numbers along with their deletion dates.  
-  _Example:_ `/root/Telegram_bot/temp_phone_numbers.json`
+  _Example:_  
+  `/root/Telegram_bot/temp_phone_numbers.json`
 
-- **MAIN_SCRIPT**:  
-  The name (or path) of the main Python script that contains your bot logic (e.g., `bot`).  
-  The authenticator will run this script after authorizing a user.
+- **MAIN_SCRIPT:**  
+  The name (or path) of your main bot script (e.g., `bot`). The authenticator will run this script after authorizing a user.  
+  _Example:_  
+  `MAIN_SCRIPT=bot`
+
+### Using Temporary Phone Numbers
+
+You can grant temporary access by adding phone numbers to the temporary numbers file (`temp_phone_numbers.json`). Each entry in this file should be a JSON object with at least:
+
+```json
+{
+  "phone": "+79991112233",
+  "deletion_date": "2025-12-31T23:59:59"
+}
+```
+
+Temporary numbers will be accepted for authorization along with permanent numbers, and they are displayed with a ⏳ icon and a label showing the approximate remaining lifetime.
 
 ---
 
 ## Running the Authenticator
 
-Instead of running your bot directly with, for example, `python3 bot.py`, run the authenticator:
+Instead of running your main bot directly with, for example, `python3 bot.py`, run the pre-authentication layer:
 
 ```bash
 python3 authenticator.py
 ```
 
-The authenticator will intercept incoming updates. Only users who share an allowed phone number (permanent or temporary) will have their updates passed to your main bot logic.
+The authenticator will intercept incoming updates and only pass those from authorized users (based on the allowed and temporary numbers) to your main bot logic.
 
 ---
 
-## Contributing and Support
+## Contributing
 
-If you have suggestions, fixes, or questions, please open an issue or submit a pull request in this repository.
+Feel free to open issues or submit pull requests if you have any improvements or bug fixes.
 
 ---
 
