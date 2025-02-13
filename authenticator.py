@@ -8,34 +8,34 @@ with a request to share a contact. If the phone number (after normalization)
 in the sent contact is found in the allowed numbers file or in the temporary numbers file,
 the user is considered authorized and their update is passed to the main script.
 """
-
-#############################
-# CONFIGURATION
-#############################
-# Bot token – preferably taken from environment; if not set, you can explicitly specify it here.
-BOT_TOKEN = os.environ.get('BOT_TOKEN') or "YOUR_BOT_TOKEN_HERE"
-
-# Path to the file that stores allowed phone numbers (one per line).
-ALLOWED_NUMBERS_FILE = os.environ.get('ALLOWED_NUMBERS_FILE', "phone_numbers.txt")
-
-# Path to the JSON file that stores temporary phone numbers.
-TEMP_PHONE_FILE = os.environ.get('TEMP_PHONE_FILE', "temp_phone_numbers.json")
-
-# Main script to run (e.g., bot.py). You can change this to run a different module.
-MAIN_SCRIPT = os.environ.get('MAIN_SCRIPT', "bot")
-#############################
-# END CONFIGURATION
-#############################
-
 import os
 import runpy
 import logging
 import json
 from dotenv import load_dotenv
 from telegram.ext import Application
-
 # Load environment variables
 load_dotenv()
+
+#############################
+# CONFIGURATION
+#############################
+# Bot token – preferably taken from environment; if not set, you can explicitly specify it here.
+# If the token remains as "YOUR_BOT_TOKEN_HERE", the authenticator will log a warning and skip launching the bot.
+BOT_TOKEN = os.environ.get('BOT_TOKEN') or "YOUR_BOT_TOKEN_HERE"
+
+# Path to the file that stores allowed phone numbers (one per line).
+ALLOWED_NUMBERS_FILE = os.environ.get('ALLOWED_NUMBERS_FILE', "/root/Telegram/BACKUP/phone_numbers.txt")
+
+# Path to the JSON file that stores temporary phone numbers.
+TEMP_PHONE_FILE = os.environ.get('TEMP_PHONE_FILE', "/root/Telegram/BACKUP/temp_phone_numbers.json")
+
+# Main script to run (e.g., bot.py). You can change this to run a different module.
+MAIN_SCRIPT = os.environ.get('MAIN_SCRIPT', "bot")
+
+#############################
+# END CONFIGURATION
+#############################
 
 # Set up logging for debugging
 logging.basicConfig(level=logging.INFO)
@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 import config
 config.BOT_TOKEN = BOT_TOKEN
 
-# Read allowed phone numbers from ALLOWED_NUMBERS_FILE.
+# Read the allowed phone numbers from ALLOWED_NUMBERS_FILE.
 allowed_numbers = set()
 if os.path.exists(ALLOWED_NUMBERS_FILE):
     with open(ALLOWED_NUMBERS_FILE, "r", encoding="utf-8") as f:
@@ -56,18 +56,6 @@ if os.path.exists(ALLOWED_NUMBERS_FILE):
     logger.info("Allowed numbers loaded: %s", allowed_numbers)
 else:
     logger.warning("File %s not found – the allowed numbers list will be empty.", ALLOWED_NUMBERS_FILE)
-
-# Function to read temporary phone numbers from TEMP_PHONE_FILE.
-def read_temp_numbers():
-    if os.path.exists(TEMP_PHONE_FILE):
-        try:
-            with open(TEMP_PHONE_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                if isinstance(data, list):
-                    return data
-        except Exception as e:
-            logger.error("Error reading temporary numbers: %s", e)
-    return []
 
 # Global dictionary to store authorized users: key – user ID, value – True/False.
 authorized_users = {}
@@ -84,6 +72,21 @@ def normalize_number(phone: str) -> str:
     if not phone.startswith("+"):
         phone = "+" + phone
     return phone
+
+def read_temp_numbers():
+    """
+    Read temporary phone numbers from TEMP_PHONE_FILE.
+    Returns a list of dicts with at least a "phone" key.
+    """
+    if os.path.exists(TEMP_PHONE_FILE):
+        try:
+            with open(TEMP_PHONE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    return data
+        except Exception as e:
+            logger.error("Error reading temporary numbers: %s", e)
+    return []
 
 async def new_process_update(self, update):
     """
@@ -115,8 +118,11 @@ async def new_process_update(self, update):
             if not phone.startswith("+"):
                 phone = "+" + phone
             logger.info("Normalized number: %s", phone)
-            # Also consider temporary numbers.
-            temp_numbers = {entry.get("phone") for entry in read_temp_numbers()}
+            try:
+                temp_data = read_temp_numbers()
+                temp_numbers = {entry.get("phone") for entry in temp_data if isinstance(entry, dict)}
+            except Exception:
+                temp_numbers = set()
             if phone in allowed_numbers or phone in temp_numbers:
                 authorized_users[user_id] = True
                 await message.reply_text("Authorization successful. You can now use the bot.")
@@ -131,7 +137,7 @@ async def new_process_update(self, update):
             await message.reply_text("Please send your own contact.")
             return
 
-    # If no contact provided, prompt user to share contact.
+    # If the update does not contain a contact, prompt user to share contact.
     from telegram import KeyboardButton, ReplyKeyboardMarkup
     button = KeyboardButton("Share Contact", request_contact=True)
     reply_markup = ReplyKeyboardMarkup([[button]], one_time_keyboard=True, resize_keyboard=True)
@@ -146,7 +152,7 @@ async def new_process_update(self, update):
 # Monkey-patch: replace Application.process_update with our version.
 Application.process_update = new_process_update
 
-# For compatibility, override decorators if used in main script.
+# For compatibility, override decorators if used in the main script.
 import utils.decorators as decorators
 def dummy_auth(func):
     return func
@@ -155,6 +161,8 @@ decorators.GroupAuthorization = dummy_auth
 
 logger.info("Launching main module %s...", MAIN_SCRIPT)
 
-# Run the main module script specified in MAIN_SCRIPT.
-if __name__ == "__main__":
+# Only launch the main module if BOT_TOKEN is not the placeholder.
+if BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
+    logger.warning("BOT_TOKEN is not set to a real token. Skipping bot launch.")
+else:
     runpy.run_module(MAIN_SCRIPT, run_name="__main__")
