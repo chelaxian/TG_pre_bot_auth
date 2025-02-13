@@ -15,8 +15,9 @@ the following features:
 - /tme           - Show deep links in t.me format
 - /tg            - Show deep links in tg://resolve format
 - /restart       - Restart the bot using the restart script
-- /update        - Update the bot using the update script
+- /update        - Update the bot using the update script (streaming output in real time)
 - /help          - Display help message
+- /id            - Return your Telegram user ID (available to all users)
 
 All configuration values are defined in the CONFIGURATION section below.
 """
@@ -28,7 +29,7 @@ All configuration values are defined in the CONFIGURATION section below.
 # Bot token – you can either set it here or load it from the environment.
 BOT_TOKEN = "0000000000:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
-# Telegram user ID of the administrator (only messages from this user are processed)
+# Telegram user ID of the administrator (only messages from this user are processed for all commands except /id)
 ADMIN_ID = 1234567
 
 # Path to the file that stores allowed phone numbers (one per line)
@@ -38,11 +39,8 @@ PHONE_FILE = "/root/Telegram_bot/phone_numbers.txt"
 RESTART_SCRIPT = "/root/Telegram_bot/restart_bot.sh"
 UPDATE_SCRIPT = "/root/Telegram_bot/update_bot.sh"
 
-# (Опционально) Draft text for deep links (if needed; otherwise leave empty)
-DRAFT_TEXT = ""  # currently not appended in deep links
-
 #############################
-# END CONFIGURATION
+# CONFIGURATION
 #############################
 
 import os
@@ -113,11 +111,13 @@ def write_phone_numbers(numbers: set):
             f.write(num + "\n")
 
 
+# --- Command Handlers (admin-only, except /id) ---
+
 async def add_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     /add <phone> - Add a phone number to the list.
     """
-    if update.effective_user.id != ADMIN_ID:
+    if not ADMIN_ID or update.effective_user.id != ADMIN_ID:
         return
 
     args = context.args
@@ -144,7 +144,7 @@ async def del_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     /del <phone> - Remove a phone number from the list.
     """
-    if update.effective_user.id != ADMIN_ID:
+    if not ADMIN_ID or update.effective_user.id != ADMIN_ID:
         return
 
     args = context.args
@@ -167,8 +167,9 @@ async def list_numbers(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     /list - Display an inline keyboard with phone numbers.
     Clicking on a button shows a confirmation menu before deletion.
+    Additionally, a Cancel button is provided to exit the menu.
     """
-    if update.effective_user.id != ADMIN_ID:
+    if not ADMIN_ID or update.effective_user.id != ADMIN_ID:
         return
 
     numbers = sorted(read_phone_numbers())
@@ -178,9 +179,9 @@ async def list_numbers(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     keyboard = []
     for num in numbers:
-        # Initial callback data: "confirm|<phone>"
+        # Callback data: "confirm|<phone>"
         keyboard.append([InlineKeyboardButton(num, callback_data=f"confirm|{num}")])
-    # Add a "Cancel" button
+    # Add a global "Cancel" button to exit the list menu.
     keyboard.append([InlineKeyboardButton("🔙 Cancel", callback_data="cancel")])
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("❓ Select a phone number to delete:", reply_markup=reply_markup)
@@ -190,7 +191,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle inline keyboard button callbacks for deletion confirmation.
     """
-    if update.effective_user.id != ADMIN_ID:
+    if not ADMIN_ID or update.effective_user.id != ADMIN_ID:
         return
 
     query = update.callback_query
@@ -227,11 +228,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(text="🔚 Deletion cancelled.")
 
 
+
 async def restart_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     /restart - Execute the restart script and return its output.
     """
-    if update.effective_user.id != ADMIN_ID:
+    if not ADMIN_ID or update.effective_user.id != ADMIN_ID:
         return
 
     try:
@@ -254,7 +256,7 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     to avoid flooding Telegram.
     In the end, the log is cleared and a final message "❕ Update finished." is displayed.
     """
-    if update.effective_user.id != ADMIN_ID:
+    if not ADMIN_ID or update.effective_user.id != ADMIN_ID:
         return
 
     sent_message = await update.message.reply_text("❕ Starting update...\n")
@@ -299,7 +301,7 @@ async def find_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
     /find <phone> - Search for a phone number in the list.
     Displays a green check mark if found and a red cross if not.
     """
-    if update.effective_user.id != ADMIN_ID:
+    if not ADMIN_ID or update.effective_user.id != ADMIN_ID:
         return
 
     args = context.args
@@ -321,7 +323,7 @@ async def tme_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
     /tme - Output a list of deep links in t.me format.
     Format: https://t.me/+<phone>
     """
-    if update.effective_user.id != ADMIN_ID:
+    if not ADMIN_ID or update.effective_user.id != ADMIN_ID:
         return
 
     numbers = sorted(read_phone_numbers())
@@ -331,7 +333,6 @@ async def tme_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     links = []
     for num in numbers:
-        # Assume num is normalized (starts with '+')
         links.append(f"https://t.me/{num}")
     await update.message.reply_text("\n".join(links))
 
@@ -341,7 +342,7 @@ async def tg_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
     /tg - Output a list of deep links in tg://resolve format.
     Format: tg://resolve?phone=<phone_without_plus>
     """
-    if update.effective_user.id != ADMIN_ID:
+    if not ADMIN_ID or update.effective_user.id != ADMIN_ID:
         return
 
     numbers = sorted(read_phone_numbers())
@@ -351,7 +352,6 @@ async def tg_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     links = []
     for num in numbers:
-        # Remove the '+' sign
         plain = num[1:] if num.startswith("+") else num
         links.append(f"tg://resolve?phone={plain}")
     await update.message.reply_text("\n".join(links))
@@ -362,7 +362,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     /help - Display help with a list of available commands.
     The commands are shown in a fixed-width code block.
     """
-    if update.effective_user.id != ADMIN_ID:
+    if not ADMIN_ID or update.effective_user.id != ADMIN_ID:
         return
 
     help_text = (
@@ -378,18 +378,33 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/restart        - Restart the bot using the restart script\n"
         "/update         - Update the bot using the update script\n"
         "/help           - Display this help message\n"
+        "/id             - Get your Telegram ID\n"
         "</pre>"
     )
     await update.message.reply_text(help_text, parse_mode="HTML")
 
 
+# --- Command Handler for /id (available to everyone) ---
+async def id_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    /id - Return your Telegram user ID.
+    This command is available to all users.
+    """
+    user = update.effective_user
+    if user:
+        await update.message.reply_text(f"Your Telegram ID: {user.id}")
+    else:
+        await update.message.reply_text("Unable to determine your Telegram ID.")
+
+
+# --- Handler for non-command messages (auto-add phone) ---
 async def phone_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Non-command messages handler.
     If the message contains a phone number (via contact or text),
     automatically add it to the list.
     """
-    if update.effective_user.id != ADMIN_ID:
+    if not ADMIN_ID or update.effective_user.id != ADMIN_ID:
         return
 
     message = update.effective_message
@@ -399,7 +414,6 @@ async def phone_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         phone = message.contact.phone_number
     else:
         text = message.text or ""
-        # Look for a pattern that resembles a phone number.
         m = re.search(r"(\+?\d[\d\s\-()]{5,}\d)", text)
         if m:
             phone = m.group(1)
@@ -434,6 +448,7 @@ async def set_bot_commands(app: Application):
         BotCommand("restart", "Restart the bot using the restart script"),
         BotCommand("update", "Update the bot using the update script"),
         BotCommand("help", "Display help message"),
+        BotCommand("id", "Get your Telegram user ID"),
     ]
     await app.bot.set_my_commands(commands)
 
@@ -441,7 +456,7 @@ async def set_bot_commands(app: Application):
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
 
-    # Register command handlers
+    # Register command handlers (admin-only)
     application.add_handler(CommandHandler("add", add_number))
     application.add_handler(CommandHandler("del", del_number))
     application.add_handler(CommandHandler("list", list_numbers))
@@ -451,6 +466,9 @@ def main():
     application.add_handler(CommandHandler("restart", restart_bot))
     application.add_handler(CommandHandler("update", update_bot))
     application.add_handler(CommandHandler("help", help_command))
+    
+    # Register /id command handler (available to everyone)
+    application.add_handler(CommandHandler("id", id_command))
 
     # Handler for inline button callbacks (for deletion confirmation)
     application.add_handler(CallbackQueryHandler(button_handler))
