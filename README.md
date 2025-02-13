@@ -210,7 +210,7 @@ The bot will now listen for messages and commands on Telegram. **Note:** It only
 
 - **Temporarily Adding a Number:**
   ```
-  /temp 10d +79262355196
+  /temp 10d +79269269966
   ```
   The bot calculates the deletion date (10 days from now) and stores the temporary number in `temp_phone_numbers.json`. Temporary numbers appear at the top of the list with a ⏳ icon and a label like `(< 3d)`.
 
