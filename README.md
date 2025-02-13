@@ -1,6 +1,6 @@
 # TG Pre Bot Auth
 
-TG Pre Bot Auth is a pre-authentication layer for your Telegram bot. It intercepts every incoming update and forces users to share their contact via Telegram’s built-in contact sharing method. Only users whose normalized phone numbers are present in your allowed numbers file (and/or in the temporary numbers file) will have their updates passed on to the main bot logic.
+TG Pre Bot Auth is a pre-authentication layer for your Python Telegram bot. It intercepts every incoming update and forces users to share their contact via Telegram’s built-in contact sharing method. Only users whose normalized phone numbers are present in your allowed numbers file (and/or in the temporary numbers file) will have their updates passed on to the main bot logic. You don't need to rewrite you Bot at all, just add this pre-auth-Bot to your main-Bot folder and you are done! 
 
 Temporary phone numbers can also be used – these are stored in a JSON file along with a deletion date. This allows you to grant temporary access without permanently adding the number to your allowed list.
 
