@@ -180,6 +180,8 @@ async def list_numbers(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for num in numbers:
         # Initial callback data: "confirm|<phone>"
         keyboard.append([InlineKeyboardButton(num, callback_data=f"confirm|{num}")])
+    # Add a "Cancel" button
+    keyboard.append([InlineKeyboardButton("🔙 Cancel", callback_data="cancel")])
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("❓ Select a phone number to delete:", reply_markup=reply_markup)
 
@@ -221,6 +223,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data.startswith("cancel|"):
         phone = data.split("|", 1)[1]
         await query.edit_message_text(text=f"🔚 Deletion cancelled for {phone}.")
+    elif data == "cancel":
+        await query.edit_message_text(text="🔚 Deletion cancelled.")
 
 
 async def restart_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
