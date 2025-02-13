@@ -87,8 +87,8 @@ This project was created to help secure Telegram bots by adding an additional pr
 - **Get your Telegram ID:**  
   - **/id** – The only command that is allowed for everyone. It gives you your Telegram ID.
 
-- **Automatic Phone Number Addition:**  
-  If the bot receives a message containing a phone number (either via a contact or a text that resembles a phone number), it normalizes the number and automatically adds it to the list if it is valid.
+- **Automatic Multiple Phone Number Addition:**  
+  If the bot receives a message containing a phone number (or batch of multiple phone numbers by 1 in a row) (either via a contact or a text that resembles a phone number), it normalizes the number and automatically adds it to the list if it is valid.
 
 - **Manage Phone Number List:**  
   - **/add `<phone>`** – Add a phone number to the list.
