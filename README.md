@@ -165,8 +165,8 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
   - Format: `tg://resolve?phone=<phone_without_plus>`
 
 ### Administrative Commands
-- **/restart** – Restart the bot by executing the restart script.
-  ❗️DON'T FORGET TO RESTART YOUR BOT EVERY TIME YOUR ADD/DELETE PHONE NUMBER (TO REFRESH ACCESS)❗️
+- **/restart** – Restart the bot by executing the restart script. \
+  ❗️DON'T FORGET TO RESTART YOUR BOT EVERY TIME YOUR ADD/DELETE PHONE NUMBER (TO REFRESH ACCESS)❗️ \
 - **/update** – Update the bot by executing the update script. The update log is streamed in real time in the same message, and upon completion the log is cleared and replaced with a final message.
 - **/help** – Display a help message with a formatted list of all available commands in a fixed-width code block.
 
