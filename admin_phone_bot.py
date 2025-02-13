@@ -387,12 +387,12 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # --- Command Handler for /id (available to everyone) ---
 async def id_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    /id - Return your Telegram user ID.
+    /id - Return your Telegram user ID in monospace format.
     This command is available to all users.
     """
     user = update.effective_user
     if user:
-        await update.message.reply_text(f"Your Telegram ID: {user.id}")
+        await update.message.reply_text(f"Your Telegram ID: `{user.id}`", parse_mode="MarkdownV2")
     else:
         await update.message.reply_text("Unable to determine your Telegram ID.")
 
@@ -401,24 +401,18 @@ async def id_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def phone_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Non-command messages handler.
-    If the message contains a phone number (via contact or text),
-    automatically add it to the list.
+    If the message contains phone numbers (via contact or text),
+    automatically add them to the list. Multiple numbers (one per line) are supported.
+    If any line does not represent a valid phone number, it is reported.
     """
     if not ADMIN_ID or update.effective_user.id != ADMIN_ID:
         return
 
     message = update.effective_message
-    phone = None
 
+    # If message contains a contact, process it normally
     if message.contact:
         phone = message.contact.phone_number
-    else:
-        text = message.text or ""
-        m = re.search(r"(\+?\d[\d\s\-()]{5,}\d)", text)
-        if m:
-            phone = m.group(1)
-
-    if phone:
         phone_norm = normalize_number(phone)
         if is_valid_phone(phone_norm):
             numbers = read_phone_numbers()
@@ -429,9 +423,53 @@ async def phone_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 write_phone_numbers(numbers)
                 await message.reply_text(f"➕ Added phone number: {phone_norm}")
         else:
-            await message.reply_text("⚠️ The provided text does not seem to be a valid phone number.")
-    else:
+            await message.reply_text("⚠️ The provided contact does not seem to be a valid phone number.")
+        return
+
+    # Process text message: split by lines and process each line
+    text = message.text or ""
+    lines = text.splitlines()
+    if not lines:
         await message.reply_text("⚠️ No phone number detected in your message.")
+        return
+
+    # Read current phone numbers once
+    numbers = read_phone_numbers()
+    added_numbers = []
+    already_present = []
+    invalid_numbers = []
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        phone_norm = normalize_number(line)
+        if is_valid_phone(phone_norm):
+            if phone_norm in numbers:
+                already_present.append(phone_norm)
+            else:
+                numbers.add(phone_norm)
+                added_numbers.append(phone_norm)
+        else:
+            invalid_numbers.append(line)
+
+    # Write updated numbers if any were added
+    if added_numbers:
+        write_phone_numbers(numbers)
+
+    # Build response message
+    responses = []
+    if added_numbers:
+        responses.append("➕ Added phone number(s): " + ", ".join(added_numbers))
+    if already_present:
+        responses.append("⚠️ Already in the list: " + ", ".join(already_present))
+    if invalid_numbers:
+        responses.append("❌ Invalid phone number format: " + ", ".join(invalid_numbers))
+
+    if responses:
+        await message.reply_text("\n".join(responses))
+    else:
+        await message.reply_text("⚠️ No valid phone numbers detected in your message.")
 
 
 async def set_bot_commands(app: Application):
