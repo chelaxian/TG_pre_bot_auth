@@ -207,11 +207,11 @@ Edit the **CONFIGURATION** section at the top of the `admin_phone_bot.py` file:
   Example: `/root/Telegram_bot/phone_numbers.txt`
 - **TEMP_PHONE_FILE:** Set the path to the JSON file that stores temporary phone numbers along with their deletion dates.  
   Example: `/root/Telegram_bot/temp_phone_numbers.json`
-- **RESTART_SCRIPT:** Set the path to the script that restarts the bot.  
+- **RESTART_SCRIPT:** Set the path to the script that restarts the bot. (YOU MUST CREATE IT FIRST BY YOUESELF)
   Example: `/root/Telegram_bot/restart_bot.sh`
-- **UPDATE_SCRIPT:** Set the path to the script that updates the bot.  
+- **UPDATE_SCRIPT:** Set the path to the script that updates the bot. (YOU MUST CREATE IT FIRST BY YOUESELF)
   Example: `/root/Telegram_bot/update_bot.sh`
-- **TEMP_CHECK_INTERVAL:** Set the check interval for temporary numbers (e.g., `"1h"`).
+- **TEMP_CHECK_INTERVAL:** Set the check interval for temporary numbers (e.g., `"1m"`).
 
 ---
 
