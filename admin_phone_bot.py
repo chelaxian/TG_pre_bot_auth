@@ -644,7 +644,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/add            - Add a phone number to the list\n"
         "/temp           - Temporarily add a phone number\n"
         "/del            - Remove a phone number from the list\n"
-        "/list           - Show a menu with phone numbers (with confirmation before deletion)\n"
+        "/list           - Show a menu with phone numbers (deletion)\n"
         "/find           - Search for a phone number in the list\n"
         "/tme            - Show deep links in t.me format\n"
         "/tg             - Show deep links in tg://resolve format\n"
