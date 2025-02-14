@@ -79,7 +79,7 @@ Edit the **CONFIGURATION** section at the top of `authenticator.py` or create a 
   `/root/Telegram_bot/temp_phone_numbers.json`
 
 - **MAIN_SCRIPT:**  
-  The name (or path) of your main bot script (e.g., `bot`). The authenticator will run this script after authorizing a user.  
+  The name of your main bot script in same folder (without extension `.py` e.g., `bot.py` = `bot`). The authenticator will run this script after authorizing a user.  
   _Example:_  
   `MAIN_SCRIPT=bot`
 
