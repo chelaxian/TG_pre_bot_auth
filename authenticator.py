@@ -30,7 +30,7 @@ ALLOWED_NUMBERS_FILE = os.environ.get('ALLOWED_NUMBERS_FILE', "/root/Telegram_bo
 # Path to the JSON file that stores temporary phone numbers.
 TEMP_PHONE_FILE = os.environ.get('TEMP_PHONE_FILE', "/root/Telegram_bot/temp_phone_numbers.json")
 
-# Main script to run (e.g., bot = bot.py). You can change this to run a different module.
+# Main script to run In same folder (without extension `.py` e.g., bot.py = bot). You can change this to run a different module.
 MAIN_SCRIPT = os.environ.get('MAIN_SCRIPT', "bot")
 
 #############################
