@@ -25,7 +25,7 @@ load_dotenv()
 BOT_TOKEN = os.environ.get('BOT_TOKEN') or "YOUR_BOT_TOKEN_HERE"
 
 # Path to the file that stores allowed phone numbers (one per line).
-ALLOWED_NUMBERS_FILE = os.environ.get('ALLOWED_NUMBERS_FILE', "/root/Telegram_bot/phone_numbers.tx")
+ALLOWED_NUMBERS_FILE = os.environ.get('ALLOWED_NUMBERS_FILE', "/root/Telegram_bot/phone_numbers.txt")
 
 # Path to the JSON file that stores temporary phone numbers.
 TEMP_PHONE_FILE = os.environ.get('TEMP_PHONE_FILE', "/root/Telegram_bot/temp_phone_numbers.json")
